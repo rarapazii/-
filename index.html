@@ -1,0 +1,628 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>昕昕老师创意小工坊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Babel from Staticfile (China accessible) -->
+    <script src="https://cdn.staticfile.org/babel-standalone/7.23.5/babel.min.js"></script>
+    <!-- Load Fonts from Loli.net (Google Fonts mirror) -->
+    <link href="https://fonts.loli.net/css2?family=Fredoka:wght@300;400;500;600&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Fredoka', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #FFFDF5;
+        margin: 0;
+        overflow: hidden;
+        /* Prevent bounce scroll on iOS */
+        overscroll-behavior: none;
+      }
+      /* Custom scrollbar for a cleaner look */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      
+      /* Animation Utilities */
+      .ease-spring {
+        transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+    </style>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react@18.2.0/+esm",
+    "react-dom/client": "https://cdn.jsdelivr.net/npm/react-dom@18.2.0/client/+esm",
+    "lucide-react": "https://cdn.jsdelivr.net/npm/lucide-react@0.263.1/+esm",
+    "@google/genai": "https://cdn.jsdelivr.net/npm/@google/genai@0.1.1/+esm",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Main Application Script -->
+    <script type="text/babel" data-type="module">
+      import React, { useState, useEffect, useRef } from 'react';
+      import ReactDOM from 'react-dom/client';
+      import { 
+        Plus, ChevronRight, ZoomIn, ZoomOut, RotateCw, Trash2, 
+        ArrowUp, ArrowDown, Layers, Sparkles, Loader2, X, Leaf 
+      } from 'lucide-react';
+      
+      // --- MOCK PROCESS.ENV for Browser ---
+      window.process = { env: { API_KEY: '' } };
+
+      // --- CONSTANTS & ICONS ---
+      
+      const FabricHandDrawnIcon = () => (
+        <svg viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 -ml-1">
+          <path d="M20 30 C 60 20, 140 20, 180 30 C 190 60, 185 110, 180 130 C 140 140, 60 140, 20 130 C 15 100, 10 60, 20 30 Z" fill="#F4C5D6" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M60 55 L 90 55" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round" />
+          <path d="M120 50 L 150 50" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round" />
+          <path d="M50 85 L 140 90" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round" />
+          <path d="M40 115 L 80 113" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round" />
+          <path d="M130 115 L 160 117" stroke="#1a1a1a" strokeWidth="8" strokeLinecap="round" />
+        </svg>
+      );
+
+      const DecorationHandDrawnIcon = () => (
+        <svg viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+          <path d="M90 25 L 130 20 L 120 70 L 100 75 Z" fill="#C00" stroke="#1a1a1a" strokeWidth="7" strokeLinejoin="round"/>
+          <ellipse cx="110" cy="25" rx="20" ry="8" fill="#A00" stroke="#1a1a1a" strokeWidth="6" />
+          <path d="M105 30 Q 115 35 110 40" stroke="#1a1a1a" strokeWidth="5" strokeLinecap="round" />
+          <path d="M70 70 C 50 40, 20 50, 20 80 C 20 110, 70 140, 80 145 C 90 140, 140 110, 140 80 C 140 50, 110 40, 90 70 Z" fill="#EFA7A7" stroke="#1a1a1a" strokeWidth="7" strokeLinejoin="round"/>
+          <path d="M110 70 Q 120 60 120 80" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
+          <path d="M140 80 C 130 60, 160 50, 180 60 C 200 80, 190 120, 160 120 C 140 110, 140 90, 140 80 Z" fill="#9DCE68" stroke="#1a1a1a" strokeWidth="7" strokeLinejoin="round"/>
+          <path d="M165 80 Q 170 90 165 100" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
+          <circle cx="165" cy="108" r="2" fill="#1a1a1a" />
+          <circle cx="50" cy="40" r="15" fill="#F8BC45" stroke="#1a1a1a" strokeWidth="6" />
+          <circle cx="25" cy="100" r="12" fill="#5D9BCF" stroke="#1a1a1a" strokeWidth="6" />
+        </svg>
+      );
+
+      const NaturalHandDrawnIcon = () => (
+        <svg viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+          <path d="M40 80 C 40 40, 90 20, 130 40 C 160 60, 150 100, 110 110 C 80 120, 40 110, 40 80 Z" fill="#86EFAC" stroke="#1a1a1a" strokeWidth="7" strokeLinejoin="round"/>
+          <path d="M40 100 L 130 40" stroke="#1a1a1a" strokeWidth="7" strokeLinecap="round" />
+          <path d="M70 80 L 70 60" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
+          <path d="M90 65 L 100 50" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
+          <path d="M90 70 L 90 90" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
+          <path d="M130 110 L 180 50" stroke="#5D4037" strokeWidth="16" strokeLinecap="round" />
+          <path d="M130 110 L 180 50" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" fill="none" className="mix-blend-multiply" />
+          <path d="M132 112 L 178 52" stroke="#1a1a1a" strokeWidth="7" strokeLinecap="round" />
+          <path d="M160 70 L 180 80" stroke="#5D4037" strokeWidth="12" strokeLinecap="round" />
+          <path d="M160 70 L 180 80" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
+          <path d="M50 125 C 40 115, 80 110, 90 120 C 100 130, 80 145, 60 140 C 50 135, 50 125, 50 125 Z" fill="#D1D5DB" stroke="#1a1a1a" strokeWidth="6" strokeLinejoin="round"/>
+          <path d="M160 30 C 150 20, 180 15, 190 25 C 200 35, 180 45, 170 40 C 160 35, 160 30, 160 30 Z" fill="#E5E7EB" stroke="#1a1a1a" strokeWidth="6" strokeLinejoin="round"/>
+        </svg>
+      );
+
+      const INITIAL_CATEGORIES = [
+        {
+          id: 'fabric',
+          title: '布料类',
+          themeColor: 'pink',
+          items: [
+            { id: 'fabric-1', name: '布料1', type: 'fabric', color: 'bg-pink-300', shape: 'rounded-rect', gradient: 'linear-gradient(135deg, #f9a8d4 0%, #f472b6 100%)' },
+            { id: 'fabric-2', name: '布料2', type: 'fabric', color: 'bg-pink-400', shape: 'rounded-rect', gradient: 'linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%)' },
+          ],
+        },
+        {
+          id: 'decoration',
+          title: '装饰类',
+          themeColor: 'orange',
+          items: [
+            { id: 'deco-1', name: '橙黄色纽扣', type: 'decoration', color: 'bg-orange-500', shape: 'rounded-rect', icon: <div className="grid grid-cols-2 gap-1"><div className="w-2 h-2 bg-white rounded-full"></div><div className="w-2 h-2 bg-white rounded-full"></div><div className="w-2 h-2 bg-white rounded-full"></div><div className="w-2 h-2 bg-white rounded-full"></div></div>, gradient: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)' },
+            { id: 'deco-2', name: '黑白圆环', type: 'decoration', color: 'bg-blue-600', shape: 'circle', gradient: 'radial-gradient(circle, #818cf8 30%, #4f46e5 100%)' },
+          ],
+        },
+        {
+          id: 'natural',
+          title: '自然材料类',
+          themeColor: 'green',
+          items: [
+            { id: 'nat-1', name: '蓝色矩形', type: 'natural', color: 'bg-blue-500', shape: 'rect', gradient: 'linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)' },
+            { id: 'nat-2', name: '绿色色块', type: 'natural', color: 'bg-green-600', shape: 'rounded-rect', gradient: 'linear-gradient(45deg, #4ade80 0%, #16a34a 100%)' },
+          ],
+        },
+      ];
+
+      const CATEGORY_ICONS = {
+        fabric: <FabricHandDrawnIcon />,
+        decoration: <DecorationHandDrawnIcon />,
+        natural: <NaturalHandDrawnIcon />,
+      };
+
+      // --- COMPONENTS ---
+
+      const SidebarItem = ({ item, onDoubleClick, variant = 'default', className = '', onDelete }) => {
+        const handleDragStart = (e) => {
+          e.dataTransfer.setData('itemId', item.id);
+          e.dataTransfer.setData('itemType', item.type);
+          e.dataTransfer.effectAllowed = 'copy';
+        };
+
+        const isBubble = variant === 'bubble';
+        const hasImage = !!item.imageUrl;
+        const hasGradient = item.gradient && item.gradient !== 'none';
+        
+        const containerStyle = {};
+        if (hasImage) {
+          containerStyle.backgroundImage = `url(${item.imageUrl})`;
+          containerStyle.backgroundSize = 'cover';
+          containerStyle.backgroundPosition = 'center';
+          containerStyle.backgroundColor = 'white';
+        } else if (hasGradient) {
+          containerStyle.background = item.gradient;
+        }
+        
+        const bgColorClass = (!hasImage && !hasGradient) ? item.color : '';
+
+        return (
+          <div 
+            className={`flex flex-col items-center gap-2 group cursor-grab active:cursor-grabbing ${className}`} 
+            onDoubleClick={() => onDoubleClick(item)}
+            draggable
+            onDragStart={handleDragStart}
+            title={item.name}
+          >
+            <div 
+              className={`
+                ${isBubble ? 'w-16 h-16 rounded-full border-2' : 'w-24 h-24 rounded-xl border-4'} 
+                shadow-md transition-all duration-300 transform group-hover:scale-110 group-hover:shadow-xl 
+                relative overflow-hidden flex items-center justify-center border-white ${bgColorClass}
+              `}
+              style={containerStyle}
+            >
+               {item.icon && !hasImage && (
+                 <div className={`absolute inset-0 flex items-center justify-center pointer-events-none ${isBubble ? 'opacity-90 scale-75' : 'opacity-80'}`}>
+                   {item.icon}
+                 </div>
+               )}
+               {!isBubble && (
+                 <div className="absolute bottom-0 w-full bg-black/50 text-white text-[10px] py-1 text-center truncate px-1 pointer-events-none">
+                   {item.name}
+                 </div>
+               )}
+
+               {/* Delete Button */}
+               {onDelete && (
+                 <button
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     e.preventDefault();
+                     onDelete();
+                   }}
+                   className="absolute top-0 right-0 m-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 w-5 h-5 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50"
+                   title="删除素材"
+                 >
+                   <X size={12} strokeWidth={3} />
+                 </button>
+               )}
+            </div>
+          </div>
+        );
+      };
+
+      const AIModal = ({ isOpen, onClose, categoryType, onImageGenerated }) => {
+        const [prompt, setPrompt] = useState('');
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState('');
+
+        if (!isOpen) return null;
+
+        const handleGenerate = async () => {
+          // Mock functionality for packaged app unless user adds key manually in console
+          alert("AI functionality requires an API Key configuration.");
+          onClose();
+        };
+
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border-4 border-indigo-100">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-indigo-100 rounded-full text-indigo-600"><Sparkles size={24} /></div>
+                  <h2 className="text-2xl font-bold text-gray-800">AI 魔法创造</h2>
+                </div>
+                <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500"><X size={24} /></button>
+              </div>
+              <p className="text-gray-600 mb-4">描述你想要的物品，AI 会帮你画出来！</p>
+              <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="w-full h-32 p-4 rounded-xl border-2 border-indigo-100 outline-none resize-none mb-4 text-lg" placeholder="例如：蓝色星星..." />
+              <button onClick={handleGenerate} className="w-full py-4 rounded-xl text-white font-bold text-lg bg-indigo-500">生成图片</button>
+            </div>
+          </div>
+        );
+      };
+
+      const CanvasItem = ({ item, isSelected, onSelect, onUpdate, onDelete, onReorder }) => {
+        const [isHovered, setIsHovered] = useState(false);
+        const [isRotating, setIsRotating] = useState(false);
+        const itemRef = useRef(null);
+        const hoverTimeoutRef = useRef(null);
+        const pointersRef = useRef(new Map());
+        const gestureRef = useRef(null);
+
+        useEffect(() => {
+          return () => { if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current); };
+        }, []);
+
+        const handlePointerDown = (e) => {
+          e.stopPropagation();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          onSelect(item.uniqueId);
+          pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+          const ptrs = Array.from(pointersRef.current.values());
+          if (ptrs.length === 1) {
+            gestureRef.current = { startDist: 0, startAngle: 0, startScale: item.scale, startRotation: item.rotation, startX: e.clientX, startY: e.clientY, itemStartX: item.x, itemStartY: item.y };
+          } else if (ptrs.length === 2) {
+            const p1 = ptrs[0]; const p2 = ptrs[1];
+            const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
+            gestureRef.current = { ...gestureRef.current, startDist: dist, startAngle: angle, startScale: item.scale, startRotation: item.rotation };
+          }
+        };
+
+        const handlePointerMove = (e) => {
+          if (!pointersRef.current.has(e.pointerId)) return;
+          pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          const ptrs = Array.from(pointersRef.current.values());
+          const gesture = gestureRef.current;
+          if (!gesture) return;
+
+          if (ptrs.length === 1) {
+            const dx = e.clientX - gesture.startX;
+            const dy = e.clientY - gesture.startY;
+            onUpdate(item.uniqueId, { x: gesture.itemStartX + dx, y: gesture.itemStartY + dy });
+          } else if (ptrs.length === 2) {
+            const p1 = ptrs[0]; const p2 = ptrs[1];
+            const newDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            const scaleFactor = newDist / gesture.startDist;
+            const newAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
+            const angleDiff = newAngle - gesture.startAngle;
+            onUpdate(item.uniqueId, { scale: Math.max(0.2, gesture.startScale * scaleFactor), rotation: gesture.startRotation + angleDiff });
+          }
+        };
+
+        const handlePointerUp = (e) => {
+          pointersRef.current.delete(e.pointerId);
+          e.currentTarget.releasePointerCapture(e.pointerId);
+          const ptrs = Array.from(pointersRef.current.values());
+          if (ptrs.length === 1) {
+            const p = ptrs[0];
+            if (gestureRef.current) {
+                gestureRef.current.startX = p.x; gestureRef.current.startY = p.y;
+                gestureRef.current.itemStartX = item.x; gestureRef.current.itemStartY = item.y;
+            }
+          } else if (ptrs.length === 0) {
+            gestureRef.current = null;
+          }
+        };
+
+        const handlePointerEnter = (e) => {
+          if (e.pointerType === 'mouse') {
+            if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
+            setIsHovered(true);
+          }
+        };
+        const handlePointerLeave = (e) => {
+          if (e.pointerType === 'mouse') {
+            hoverTimeoutRef.current = setTimeout(() => { setIsHovered(false); }, 300);
+          }
+        };
+
+        const handleScale = (delta) => onUpdate(item.uniqueId, { scale: Math.max(0.2, item.scale + delta) });
+        
+        const handleRotateStart = (e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); setIsRotating(true); };
+        const handleRotateMove = (e) => {
+          if (!isRotating || !itemRef.current) return;
+          e.stopPropagation();
+          const rect = itemRef.current.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const radians = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+          const degrees = radians * (180 / Math.PI);
+          onUpdate(item.uniqueId, { rotation: degrees + 90 });
+        };
+        const handleRotateEnd = (e) => { e.stopPropagation(); setIsRotating(false); e.currentTarget.releasePointerCapture(e.pointerId); };
+
+        const showControls = isSelected || isHovered || isRotating;
+
+        return (
+          <div ref={itemRef} className="absolute select-none group" style={{ left: item.x, top: item.y, width: item.width, height: item.height, transform: `rotate(${item.rotation}deg) scale(${item.scale})`, zIndex: isSelected ? 50 : 1, touchAction: 'none', cursor: 'grab' }}
+            onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} onPointerEnter={handlePointerEnter} onPointerLeave={handlePointerLeave}>
+            <div className={`w-full h-full rounded-xl shadow-md transition-all duration-200 overflow-hidden relative flex items-center justify-center ${isSelected ? 'ring-4 ring-blue-500 shadow-2xl' : ''}`} style={{ background: item.gradient || item.color, backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : item.gradient, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: item.shape === 'circle' ? '50%' : '12px' }}>
+              {item.icon && !item.imageUrl && <div className="opacity-80 transform scale-150">{item.icon}</div>}
+            </div>
+            {showControls && (
+              <div className="absolute -top-24 left-1/2 transform -translate-x-1/2 bg-white/95 backdrop-blur rounded-2xl shadow-xl border border-gray-200 p-2 flex gap-2 items-center min-w-[240px] z-[100]" onPointerDown={(e) => e.stopPropagation()} onPointerEnter={handlePointerEnter} onPointerLeave={handlePointerLeave}>
+                   <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100">
+                      <div className="px-1 text-gray-400"><Layers size={16} /></div>
+                      <div className="flex flex-col gap-0.5">
+                         <button onClick={() => onReorder(item.uniqueId, 'up')} className="p-0.5 hover:bg-orange-100 text-orange-600 rounded"><ArrowUp size={16}/></button>
+                         <button onClick={() => onReorder(item.uniqueId, 'down')} className="p-0.5 hover:bg-orange-100 text-orange-600 rounded"><ArrowDown size={16}/></button>
+                      </div>
+                  </div>
+                  <div className="h-8 w-px bg-gray-300 mx-1"></div>
+                  <div className="flex flex-col gap-1">
+                      <button onClick={() => handleScale(0.1)} className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg"><ZoomIn size={18} /></button>
+                      <button onClick={() => handleScale(-0.1)} className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg"><ZoomOut size={18} /></button>
+                  </div>
+                  <div className="flex flex-col gap-1 items-center justify-center">
+                      <button onPointerDown={handleRotateStart} onPointerMove={handleRotateMove} onPointerUp={handleRotateEnd} onPointerCancel={handleRotateEnd} className={`p-2 hover:bg-purple-50 text-purple-600 rounded-lg cursor-grab active:cursor-grabbing ${isRotating ? 'bg-purple-100 ring-2 ring-purple-300' : ''}`}><RotateCw size={24} /></button>
+                  </div>
+                  <div className="h-8 w-px bg-gray-300 mx-1"></div>
+                  <button onClick={() => onDelete(item.uniqueId)} className="p-2 hover:bg-red-50 text-red-500 rounded-xl transition-colors"><Trash2 size={20} /></button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const CategorySection = ({ category, onAddItem, onGenerateAI, onUploadImage, onDeleteItem }) => {
+        const [isOpen, setIsOpen] = useState(false);
+        const [isMobile, setIsMobile] = useState(false);
+        const [scrollIndex, setScrollIndex] = useState(0);
+        const fileInputRef = useRef(null);
+        const containerRef = useRef(null);
+        const touchStartRef = useRef(null);
+
+        useEffect(() => {
+          const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+          checkMobile();
+          window.addEventListener('resize', checkMobile);
+          return () => window.removeEventListener('resize', checkMobile);
+        }, []);
+
+        useEffect(() => {
+          const handleClickOutside = (event) => { if (containerRef.current && !containerRef.current.contains(event.target)) setIsOpen(false); };
+          if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+          return () => document.removeEventListener('mousedown', handleClickOutside);
+        }, [isOpen]);
+
+        useEffect(() => { if (!isOpen) setTimeout(() => setScrollIndex(0), 300); }, [isOpen]);
+
+        const themeColors = {
+          pink: { bg: 'bg-pink-100', text: 'text-pink-600' },
+          orange: { bg: 'bg-orange-100', text: 'text-orange-600' },
+          green: { bg: 'bg-green-100', text: 'text-green-600' },
+        }[category.themeColor];
+
+        const handleFileChange = (e) => {
+          const file = e.target.files?.[0];
+          if (file) onUploadImage(file);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        };
+
+        const contentItems = category.items.map(item => ({ type: 'item', data: item }));
+        const uploadItem = { type: 'action-upload', data: { id: 'upload-btn', name: 'Upload Image' } };
+
+        const VISIBLE_COUNT = 6;
+        const uploadSlotIndex = Math.min(contentItems.length, VISIBLE_COUNT - 1);
+        const maxScroll = Math.max(0, contentItems.length - uploadSlotIndex);
+        const RADIUS = 155;
+        const START_ANGLE = isMobile ? 40 : -50; 
+        const END_ANGLE = isMobile ? 140 : 50;
+        const totalSpan = END_ANGLE - START_ANGLE;
+        const stepAngle = totalSpan / (VISIBLE_COUNT - 1);
+
+        const handleWheel = (e) => {
+          if (!isOpen) return;
+          e.stopPropagation();
+          const direction = e.deltaY > 0 ? 1 : -1;
+          setScrollIndex(prev => Math.max(0, Math.min(prev + direction, maxScroll)));
+        };
+
+        const handleTouchStart = (e) => { touchStartRef.current = e.touches[0].clientY; };
+        const handleTouchMove = (e) => {
+          if (touchStartRef.current === null || !isOpen) return;
+          const currentY = e.touches[0].clientY;
+          const diff = touchStartRef.current - currentY;
+          if (Math.abs(diff) > 20) {
+            const direction = diff > 0 ? 1 : -1; 
+            setScrollIndex(prev => Math.max(0, Math.min(prev + direction, maxScroll)));
+            touchStartRef.current = currentY; 
+          }
+        };
+        const handleTouchEnd = () => { touchStartRef.current = null; };
+
+        const getPosition = (visualIndex) => {
+          const angleDeg = START_ANGLE + (visualIndex * stepAngle);
+          const angleRad = (angleDeg * Math.PI) / 180;
+          return { tx: Math.round(RADIUS * Math.cos(angleRad)), ty: Math.round(RADIUS * Math.sin(angleRad)) };
+        };
+
+        return (
+          <div ref={containerRef} className="relative flex items-center justify-center lg:justify-start h-36 w-full" style={{ zIndex: isOpen ? 50 : 1 }}>
+            <button onClick={() => setIsOpen(!isOpen)} className={`relative z-20 w-32 h-32 rounded-full flex flex-col items-center justify-center gap-1 shadow-lg border-4 border-white transition-all duration-300 ease-spring ${isOpen ? 'scale-110 ring-4 ring-opacity-50' : 'hover:scale-105'} ${themeColors.bg} ${themeColors.text} ${isOpen ? 'ring-' + category.themeColor + '-300' : ''}`}>
+              <div className="transform scale-150">{CATEGORY_ICONS[category.id]}</div>
+              <span className="text-xl mt-2 tracking-wide" style={{ fontFamily: '"ZCOOL KuaiLe", cursive' }}>{category.title}</span>
+              <div className={`absolute -right-3 top-1/2 -translate-y-1/2 bg-white rounded-full p-1 shadow-sm transition-transform duration-300 ${isOpen ? 'rotate-180' : ''} ${isMobile ? 'rotate-90 top-auto -bottom-2 right-1/2 translate-x-1/2 translate-y-0' : ''}`}>
+                 <ChevronRight size={14} className="text-gray-400" />
+              </div>
+            </button>
+            <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full z-10 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`} onWheel={handleWheel} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+              {Array.from({ length: 10 }, (_, i) => i - 2).map((visualIndex) => {
+                const contentDataIndex = scrollIndex + visualIndex;
+                const contentNode = (contentDataIndex >= 0 && contentDataIndex < contentItems.length) ? contentItems[contentDataIndex] : null;
+                const isFixedUploadSlot = visualIndex === uploadSlotIndex;
+                const elementsToRender = [];
+                if (contentNode) elementsToRender.push({ type: 'content', node: contentNode, forceGhost: visualIndex >= uploadSlotIndex });
+                if (isFixedUploadSlot) elementsToRender.push({ type: 'upload', node: uploadItem, forceGhost: false });
+
+                return elementsToRender.map((el, idx) => {
+                   const key = el.type === 'upload' ? 'fixed-upload' : el.node.data.id;
+                   const { tx, ty } = getPosition(visualIndex);
+                   const isVisualGhost = visualIndex < 0 || visualIndex > (uploadSlotIndex - 1);
+                   const finalIsGhost = el.type === 'upload' ? false : (el.forceGhost || isVisualGhost);
+                   let zIndex = 10;
+                   if (el.type === 'upload') zIndex = 60; else if (!finalIsGhost) zIndex = 50 - visualIndex;
+                   
+                   const style = {
+                      transform: isOpen ? `translate(${tx}px, ${ty}px) scale(${finalIsGhost ? 0.7 : 1})` : `translate(0px, 0px) scale(0)`,
+                      opacity: isOpen ? (finalIsGhost ? 0.3 : 1) : 0,
+                      filter: isOpen && finalIsGhost ? 'blur(2px) grayscale(50%)' : 'none',
+                      left: '50%', top: '50%', marginLeft: -32, marginTop: -32, zIndex: zIndex, pointerEvents: finalIsGhost ? 'none' : 'auto',
+                   };
+
+                   return (
+                     <div key={key} className="absolute transition-all duration-500 cubic-bezier(0.2, 0.8, 0.2, 1) hover:z-[100]" style={style}>
+                       {el.node.type === 'item' && (
+                         <SidebarItem 
+                           item={el.node.data} 
+                           onDoubleClick={() => onAddItem(el.node.data)} 
+                           variant="bubble" 
+                           onDelete={() => onDeleteItem(el.node.data.id)} 
+                         />
+                       )}
+                       {el.node.type === 'action-upload' && (
+                         <>
+                           <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                           <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform border-2 border-white" title="Upload Image"><Plus size={28} strokeWidth={3} /></button>
+                         </>
+                       )}
+                     </div>
+                   );
+                });
+              })}
+            </div>
+          </div>
+        );
+      };
+
+      const App = () => {
+        const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+        const [workspaceItems, setWorkspaceItems] = useState([]);
+        const [selectedId, setSelectedId] = useState(null);
+        const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+        const [activeCategoryForAI, setActiveCategoryForAI] = useState('fabric');
+        const [showTeacherMessage, setShowTeacherMessage] = useState(false);
+        const workspaceRef = useRef(null);
+
+        const handleAddToWorkspace = (sourceItem) => {
+          const workspaceRect = workspaceRef.current?.getBoundingClientRect();
+          const centerX = workspaceRect ? workspaceRect.width / 2 : window.innerWidth / 2;
+          const centerY = workspaceRect ? workspaceRect.height / 2 : window.innerHeight / 2;
+          const newItem = { ...sourceItem, uniqueId: `${sourceItem.id}-${Date.now()}`, x: centerX - 60 + (Math.random() * 40 - 20), y: centerY - 60 + (Math.random() * 40 - 20), width: 120, height: 120, rotation: 0, scale: 1 };
+          setWorkspaceItems((prev) => [...prev, newItem]);
+          setSelectedId(newItem.uniqueId);
+        };
+
+        const handleUpdateItem = (id, updates) => setWorkspaceItems((prev) => prev.map((item) => (item.uniqueId === id ? { ...item, ...updates } : item)));
+        const handleDeleteItem = (id) => { setWorkspaceItems((prev) => prev.filter((item) => item.uniqueId !== id)); if (selectedId === id) setSelectedId(null); };
+        const handleReorderItem = (id, direction) => {
+          setWorkspaceItems((prev) => {
+            const index = prev.findIndex((item) => item.uniqueId === id);
+            if (index === -1) return prev;
+            const newItems = [...prev];
+            const item = newItems[index];
+            newItems.splice(index, 1);
+            if (direction === 'up') newItems.splice(Math.min(newItems.length, index + 1), 0, item);
+            else if (direction === 'down') newItems.splice(Math.max(0, index - 1), 0, item);
+            return newItems;
+          });
+        };
+
+        const handleUploadImage = (categoryType, file) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result;
+            if (result) {
+              const newItem = { id: `upload-${Date.now()}`, name: file.name.substring(0, 8), type: categoryType, color: 'bg-white', shape: 'rounded-rect', gradient: 'none', imageUrl: result };
+              setCategories((prev) => prev.map((cat) => (cat.id === categoryType ? { ...cat, items: [...cat.items, newItem] } : cat)));
+            }
+          };
+          reader.readAsDataURL(file);
+        };
+        
+        const handleDeleteCategoryItem = (categoryId, itemId) => {
+            setCategories((prev) =>
+              prev.map((cat) => {
+                if (cat.id === categoryId) {
+                  return {
+                    ...cat,
+                    items: cat.items.filter((item) => item.id !== itemId),
+                  };
+                }
+                return cat;
+              })
+            );
+        };
+
+        const handleDragOver = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; };
+        const handleDrop = (e) => {
+          e.preventDefault();
+          const itemId = e.dataTransfer.getData('itemId');
+          const itemType = e.dataTransfer.getData('itemType');
+          if (!itemId || !itemType) return;
+          const category = categories.find(c => c.id === itemType);
+          const sourceItem = category?.items.find(i => i.id === itemId);
+          if (sourceItem && workspaceRef.current) {
+            const workspaceRect = workspaceRef.current.getBoundingClientRect();
+            const x = e.clientX - workspaceRect.left - 60;
+            const y = e.clientY - workspaceRect.top - 60;
+            const newItem = { ...sourceItem, uniqueId: `${sourceItem.id}-${Date.now()}`, x, y, width: 120, height: 120, rotation: 0, scale: 1 };
+            setWorkspaceItems((prev) => [...prev, newItem]);
+            setSelectedId(newItem.uniqueId);
+          }
+        };
+
+        return (
+          <div className="h-screen w-screen overflow-hidden relative bg-[#FFFDF5]">
+            <div ref={workspaceRef} className="absolute inset-0 z-0 overflow-hidden" style={{ backgroundColor: '#FFFDF5', backgroundImage: 'radial-gradient(#E3D5CA 2px, transparent 2px)', backgroundSize: '30px 30px' }} onClick={() => setSelectedId(null)} onDragOver={handleDragOver} onDrop={handleDrop}>
+              {workspaceItems.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center text-[#E3D5CA] text-3xl pointer-events-none select-none opacity-50" style={{ fontFamily: '"ZCOOL KuaiLe", cursive' }}>
+                   点击左侧图标开始创作吧！
+                </div>
+              )}
+              {workspaceItems.map((item) => (
+                <CanvasItem key={item.uniqueId} item={item} isSelected={selectedId === item.uniqueId} onSelect={setSelectedId} onUpdate={handleUpdateItem} onDelete={handleDeleteItem} onReorder={handleReorderItem} />
+              ))}
+            </div>
+
+            <div className="absolute top-0 left-0 right-0 z-50 flex justify-center items-center pointer-events-none pt-6">
+              <div className="relative flex items-center">
+                <h1 className="text-5xl md:text-7xl tracking-wider text-amber-800 pointer-events-auto cursor-pointer hover:scale-105 transition-all duration-300" onClick={() => setShowTeacherMessage(prev => !prev)} style={{ fontFamily: '"ZCOOL KuaiLe", cursive', WebkitTextStroke: '2px #FFF', textShadow: '3px 3px 0px rgba(139, 69, 19, 0.1), 5px 5px 10px rgba(0,0,0,0.05)', padding: '10px 20px' }} title="点击召唤昕昕老师！">
+                  昕昕老师创意小工坊
+                </h1>
+                <div className={`absolute left-full ml-4 whitespace-nowrap bg-white px-6 py-3 rounded-2xl rounded-bl-none shadow-xl border-4 border-orange-200 flex items-center justify-center pointer-events-auto transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) origin-left ${showTeacherMessage ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-0 -translate-x-8'}`}>
+                  <span className="text-2xl text-orange-500 font-bold tracking-wide" style={{ fontFamily: '"ZCOOL KuaiLe", cursive' }}>一起创作吧！✨</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute left-16 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-8 pointer-events-none">
+              {categories.map((category) => (
+                <div key={category.id} className="pointer-events-auto">
+                  <CategorySection category={category} onAddItem={handleAddToWorkspace} onGenerateAI={() => {}} onUploadImage={(file) => handleUploadImage(category.id, file)} onDeleteItem={(itemId) => handleDeleteCategoryItem(category.id, itemId)} />
+                </div>
+              ))}
+            </div>
+            
+            <AIModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} categoryType={activeCategoryForAI} onImageGenerated={() => {}} />
+          </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
